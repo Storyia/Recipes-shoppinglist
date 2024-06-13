@@ -44,7 +44,7 @@ app.py
 - Факультет вычислительной математики и кибернетики МГУ.
 - Моему руководителю Юлии Мочаловой за руководство и поддержку.
 
-
+[Смотреть видео на Google Drive](https://drive.google.com/file/d/1a8GRV5EKF6wS1yYmuOJdLB_qZhzzIJLj/preview)
 
 
 # Sistema de recomendación de recetas
