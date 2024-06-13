@@ -1,5 +1,3 @@
-![Обложка](./Обложка)
-
 # Система рекомендаций рецептов
 
 ## Общая информация
@@ -50,6 +48,7 @@ app.py
 
 [Смотреть видео на Google Drive](https://drive.google.com/file/d/1a8GRV5EKF6wS1yYmuOJdLB_qZhzzIJLj/preview)
 
+![Обложка](./Обложка.png)
 
 # Sistema de recomendación de recetas
 
