@@ -47,8 +47,7 @@ app.py
 
 ## Демонстрация работы
 
-<iframe src="https://drive.google.com/file/d/1a8GRV5EKF6wS1yYmuOJdLB_qZhzzIJLj/preview" width="640" height="480"></iframe>
-
+[Смотреть видео на Google Drive](https://drive.google.com/file/d/1a8GRV5EKF6wS1yYmuOJdLB_qZhzzIJLj/preview)
 
 
 # Sistema de recomendación de recetas
