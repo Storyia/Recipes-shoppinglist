@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+<head>
+    <title> {% block title %} TITLE GOES HERE {% endblock %} </title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">   <!-- для мобильной версии -->
+
+    <!-- Подключаем jQuery для DOM в dashboard, проверка загрузки страницы-->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+
+    <!-- Подключаем Bootstrap CSS и JS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <!-- Подключаем FontAwesome для иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Подключаем собственные стили -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- Навигационная панель -->
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+  <div class="container-fluid">
+    <!-- Логотип и кнопка для раскрытия меню на мобильных устройствах -->
+    <div class="navbar-header">
+      <!-- Кнопка для раскрытия меню на мобильных устройствах -->
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+        <!-- Текст для скринридеров, скрыт визуально -->
+        <span class="sr-only">Toggle navigation</span>
+        <!-- Три полоски иконки для кнопки -->
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <!-- Логотип и ссылка на главную страницу -->
+      <a class="navbar-brand" href="/">Вкусная идея</a>
+    </div>
+
+    <!-- Скрываемая часть навигационной панели -->
+    <div id="navbar" class="collapse navbar-collapse">
+      <!-- Левое меню навигации -->
+      <ul class="nav navbar-nav">
+        <!-- Пункт меню для перехода на панель поиска -->
+        <li><a href="/dashboard"><i class="fa fa-search"></i> Поиск</a></li>
+        <!-- Пункт меню для перехода в профиль пользователя -->
+        <li><a href="/my-profile"><img src="/static/img/icons8-hot-food-64.png" style="width: 18px; height: 18px;" alt="Profile Icon"> Профиль</a></li>
+      </ul>
+
+      <!-- Правое меню навигации -->
+      <ul class="nav navbar-nav navbar-right">
+        <!-- Отображение всплывающих сообщений, если они есть -->
+        <li>
+          {% for flash in get_flashed_messages() %}
+          <p class="navbar-text"> {{ flash }} </p>
+          {% endfor %}
+        </li>
+        <!-- Проверка, залогинен ли пользователь -->
+        {% if "user_id" in session %}
+        <!-- Пункт меню для выхода из системы -->
+        <li><a href="/logout"><i class="fa fa-sign-out"></i> Выход</a></li>
+        {% else %}
+        <!-- Выпадающее меню для регистрации -->
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Регистрация <span class="caret"></span></a>
+          <ul class="dropdown-menu dropdown-lr animated flipInX" role="menu">
+            <div class="col-lg-12">
+              <!-- Форма регистрации -->
+              <div class="text-center"><h3><b>Регистрация</b></h3></div>
+              <form id="ajax-register-form" action="/register" method="POST" role="form" autocomplete="off">
+                <!-- Поле для ввода имени пользователя -->
+                <div class="form-group">
+                  <input type="text" name="username" tabindex="1" class="form-control" placeholder="Username">
+                </div>
+                <!-- Поле для ввода адреса электронной почты -->
+<div class="form-group">
+  <input type="email" name="email" tabindex="1" class="form-control" placeholder="Email Address">
+</div>
+
+<!-- Поле для ввода пароля -->
+<div class="form-group">
+  <input type="password" name="password" tabindex="2" class="form-control" placeholder="Password">
+</div>
+
+<!-- Группа для кнопки отправки формы -->
+<div class="form-group">
+  <div class="row">
+    <!-- Кнопка отправки формы регистрации -->
+    <div class="col-xs-6 col-xs-offset-3">
+      <input type="submit" id="submit-login" tabindex="4" class="form-control btn btn-info" value="Регистрация">
+    </div>
+  </div>
+</div>
+
+<!-- Скрытое поле для токена, используемого для безопасности -->
+<input type="hidden" class="hide" name="token" id="token" value="7c6f19960d63f53fcd05c3e0cbc434c0">
+</form>
+</div>
+</ul>
+</li>
+
+<!-- Выпадающее меню для входа в систему -->
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Вход <span class="caret"></span></a>
+  <ul class="dropdown-menu dropdown-lr animated slideInRight" role="menu">
+    <div class="col-lg-12">
+      <!-- Заголовок формы входа -->
+      <div class="text-center"><h3><b>Вход</b></h3></div>
+      <!-- Форма входа -->
+      <form action="/login" method="POST" role="form" autocomplete="off">
+        <!-- Поле для ввода имени пользователя -->
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" name="username" id="username" tabindex="1" class="form-control" placeholder="Username" autocomplete="off">
+        </div>
+<!-- Поле для ввода пароля -->
+                <div class="form-group">
+                  <label for="password">Password</label>
+                  <input type="password" name="password" id="password" tabindex="2" class="form-control" placeholder="Password" autocomplete="off">
+                </div>
+        <!-- Группа для кнопки отправки формы -->
+                <div class="form-group">
+                  <div class="row">
+                    <!-- Кнопка отправки формы входа -->
+                    <div class="col-xs-12">
+                      <input type="submit" id="submit-login" tabindex="4" class="form-control btn btn-success" value="Вход">
+                    </div>
+                  </div>
+                </div>
+        <!-- Скрытое поле для токена, используемого для безопасности -->
+                <input type="hidden" class="hide" name="token" id="token" value="a465a2791ae0bae853cf4bf485dbe1b6">
+              </form>
+            </div>
+          </ul>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+{% block content %}
+    основная часть страницы
+{% endblock %}
+
+</body>
+</html>

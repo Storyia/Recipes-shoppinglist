@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+<!-- Расширяем базовый шаблон base.html -->
+
+{% block title %}Dashboard{% endblock %}
+<!-- Определяем содержимое блока title, который будет отображаться в заголовке страницы -->
+
+{% block content %}
+<!-- Определяем содержимое блока content, который будет вставлен в основной контент страницы -->
+
+<meta charset="UTF-8">
+<!-- Установка кодировки страницы -->
+<meta name="viewport" content="width=device-width, initial-scale=1">   <!-- для мобильной версии -->
+
+<div class="container">
+    <div class="background-image">
+        <div class="page-header">
+            <h2 id="search-panel-heading">Панель поиска</h2>
+                        <!-- Заголовок панели поиска -->
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-container card">
+                <h1>Рекомендация рецептов</h1>
+                <hr>
+                <!-- Форма для ввода ингредиентов и аллергенов -->
+                <form action="/dashboard" method="POST">
+                    <!-- Поле для ввода ингредиентов -->
+                    <div id="ingredient-tags" class="tags-input">
+                        <input name="ingredients" placeholder="Введите ингредиенты" type="text" onkeydown="handleInput(event, 'ingredient-tags', 'hidden-ingredients')" autocomplete="off">
+                        <input type="hidden" name="hidden-ingredients" id="hidden-ingredients">
+                    </div>
+                    <!-- Поле для ввода аллергенов -->
+                    <div id="allergy-tags" class="tags-input">
+                        <input name="allergies" placeholder="Аллергены (например, орехи, лактоза)" type="text" onkeydown="handleInput(event, 'allergy-tags', 'hidden-allergies')" autocomplete="off">
+                        <input type="hidden" name="hidden-allergies" id="hidden-allergies">
+                    </div>
+                    <button type="submit">Найти рецепты</button>
+                </form>
+                <br>
+                {% if message %}
+                    <!-- Отображение сообщения, если оно есть -->
+                    <div>{{ message }}</div>
+                {% endif %}
+                {% if recommendations %}
+                    <div class="recommendations">
+                        <h2>Рекомендации рецептов:</h2>
+                        <!-- Перебор списка рекомендаций -->
+                        {% for recipe, similarity in recommendations %}
+                            <div class="card">
+                                <!-- Отображение информации о рецепте -->
+                                <h4>{{ recipe['NAME'] }}</h4>
+                                <p><strong>Ингредиенты:</strong> {{ recipe['INGREDIENTS'] }}</p>
+                                <p><strong>Инструкции:</strong> {{ recipe['RECIPE'] }}</p>
+                                <p><strong>Схожесть:</strong> {{ '%.2f' % similarity }}%</p>
+                                <!-- Форма для добавления рецепта в список покупок -->
+                                <form class="add-to-list-form" method="POST" action="/add-to-list">
+                                    <input type="hidden" name="recipe_id" value="{{ recipe['RECIPE_ID'] }}">
+                                    <select name="list_id" id="list-select-{{ recipe['RECIPE_ID'] }}">
+                                        {% for list in user_lists %}
+                                            <!-- Перебор списков пользователя -->
+                                            <option value="{{ list.list_id }}">{{ list.list_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-info">Добавить в список</button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <h3>Создай новый список покупок:</h3>
+                <!-- Форма для создания нового списка покупок -->
+                <form id="new-list-container" action="/displayNewList" method="POST">
+                    <input name="new_list_name" placeholder="Введите название списка" required autocomplete="off">
+                    <button type="submit">Создать</button>
+                </form>
+            </div>
+            <div class="card" id="get-user-lists">
+                <h3>Мои списки</h3>
+                <!-- Список существующих списков покупок пользователя -->
+                <select id="selected-list-id" name="selected-list-id" onchange="updateListContents()">
+                    {% for list in user_lists %}
+                        <!-- Перебор списков пользователя -->
+                        <option value="{{ list.list_id }}">{{ list.list_name }}</option>
+                    {% endfor %}
+                </select>
+                <div id="list-title"></div>
+                <div id="list-contents"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Функция для обработки ввода в поля для ингредиентов и аллергенов
+function handleInput(event, containerId, hiddenInputId) {
+    // Получаем текущее поле ввода, которое вызвало событие
+    const input = event.target;
+    // Получаем контейнер, в котором находятся теги
+    const container = document.getElementById(containerId);
+
+    // Предотвращаем отправку формы при нажатии Enter
+    if (event.key === 'Enter') {
+        event.preventDefault();  // Предотвращаем стандартное поведение Enter (отправку формы)
+        const tagValue = input.value.trim();  // Обрезаем пробелы по краям введенного значения
+        if (tagValue) {  // Если введенное значение не пустое
+            createTag(tagValue, container, input, hiddenInputId);  // Создаем новый тег
+            input.value = '';  // Очищаем текстовое поле после создания тега
+        }
+        return false;  // Возвращаем false для предотвращения любых других действий
+    }
+
+    // Обрабатываем ввод запятой
+    if (event.key === ',') {
+        const tagValue = input.value.replace(/,/g, '').trim();  // Убираем запятые и обрезаем пробелы
+        if (tagValue) {  // Если введенное значение не пустое
+            createTag(tagValue, container, input, hiddenInputId);  // Создаем новый тег
+            input.value = '';  // Очищаем текстовое поле после создания тега
+        }
+    }
+}
+
+// Функция для создания нового тега
+function createTag(tagValue, container, input, hiddenInputId) {
+    // Получаем скрытое поле ввода по его идентификатору
+    const hiddenInput = document.getElementById(hiddenInputId);
+
+    // Создаем новый div элемент для тега
+    const tag = document.createElement('div');
+    tag.className = 'tag';  // Устанавливаем класс 'tag' для стилизации
+    tag.textContent = tagValue;  // Устанавливаем текстовое содержание тега
+
+    // Создаем кнопку для удаления тега
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = '✖';  // Устанавливаем текст '✖' для кнопки
+    deleteButton.type = 'button';  // Устанавливаем тип кнопки как 'button'
+    deleteButton.className = 'delete-tag';  // Устанавливаем класс 'delete-tag' для стилизации кнопки
+    deleteButton.onclick = function() {  // Назначаем обработчик события на клик по кнопке
+        tag.remove();  // Удаляем тег
+        updateHiddenInput(hiddenInputId);  // Обновляем значение скрытого поля ввода
+    };
+
+    // Добавляем кнопку удаления в тег
+    tag.appendChild(deleteButton);
+    // Вставляем новый тег в контейнер перед полем ввода
+    container.insertBefore(tag, input);
+
+    // Обновляем значение скрытого поля ввода
+    updateHiddenInput(hiddenInputId);
+}
+
+// Функция для обновления значения скрытого поля ввода
+function updateHiddenInput(hiddenInputId) {
+    // Получаем скрытое поле ввода по его идентификатору
+    const hiddenInput = document.getElementById(hiddenInputId);
+    // Получаем контейнер, в котором находятся теги
+    const container = hiddenInput.parentElement;
+    // Находим все элементы с классом 'tag' в контейнере
+    const tags = container.querySelectorAll('.tag');
+    // Преобразуем найденные теги в массив и извлекаем текстовое содержание каждого тега, убирая последний символ "✖"
+    const tagValues = Array.from(tags).map(tag => tag.textContent.slice(0, -1));
+    // Объединяем значения тегов в строку, разделяя их запятыми, и присваиваем её скрытому полю ввода
+    hiddenInput.value = tagValues.join(',');
+    // Выводим обновленное значение скрытого поля ввода в консоль для отладки
+    console.log("Updated hidden input for", hiddenInputId, "to:", hiddenInput.value);
+}
+
+// Функция для обновления содержимого списка покупок
+function updateListContents() {
+    // Получаем идентификатор выбранного списка покупок
+    const listId = document.getElementById('selected-list-id').value;
+    // Получаем название выбранного списка
+    const listTitle = document.getElementById('selected-list-id').options[document.getElementById('selected-list-id').selectedIndex].text;
+    // Получаем контейнер для заголовка списка
+    const listTitleContainer = document.getElementById('list-title');
+    // Получаем контейнер для содержимого списка
+    const listContainer = document.getElementById('list-contents');
+
+    // Устанавливаем заголовок списка
+    listTitleContainer.innerHTML = `<h4>Список покупок '${listTitle}':</h4>`;
+    // Очищаем текущее содержимое списка
+    listContainer.innerHTML = '';
+
+    // Отправляем запрос на сервер для получения содержимого списка
+    fetch('/get-list-contents', {
+        method: 'POST',  // Метод запроса - POST
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',  // Устанавливаем тип контента
+        },
+        body: `list_id=${listId}`  // Передаем идентификатор списка в теле запроса
+    })
+    .then(response => response.json())  // Обрабатываем ответ как JSON
+    .then(data => {
+        // Проверяем, есть ли данные и являются ли они массивом
+        if (data && Array.isArray(data)) {
+            // Проходим по каждому элементу массива
+            data.forEach(item => {
+                // Создаем новый div для каждого ингредиента
+                const div = document.createElement('div');
+                div.textContent = item.INGREDIENTS;  // Устанавливаем текстовое содержимое div как ингредиент
+                listContainer.appendChild(div);  // Добавляем div в контейнер списка
+            });
+        } else {
+            // Если данных нет, выводим сообщение об отсутствии ингредиентов
+            listContainer.innerHTML = '<p>Нет ингредиентов в этом списке.</p>';
+        }
+    })
+    .catch(error => {
+        // Обрабатываем ошибку, если запрос не удался
+        console.error('Ошибка при получении содержимого списка:', error);
+    });
+}
+
+// Добавляем прослушиватель событий, который будет выполнен, когда весь HTML-документ загружен и обработан, чтобы все работало
+document.addEventListener('DOMContentLoaded', function() {
+    // Находим все формы с классом 'add-to-list-form' и добавляем к ним обработчики событий
+    document.querySelectorAll('.add-to-list-form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            // Предотвращаем отправку формы и перезагрузку страницы
+            event.preventDefault();
+            // Создаем объект FormData из текущей формы
+            const formData = new FormData(this);
+
+            // Выполняем AJAX-запрос для добавления ингредиентов в список
+            fetch('/add-to-list', {
+                method: 'POST',  // Метод запроса - POST
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',  // Устанавливаем тип контента
+                },
+                body: new URLSearchParams(formData).toString()  // Преобразуем данные формы в строку
+            })
+            .then(response => response.json())  // Обрабатываем ответ как JSON
+            .then(data => {
+                // Выводим сообщение об успешном добавлении ингредиентов
+                alert('Ингредиенты добавлены в список');
+                // Обновляем содержимое списка покупок
+                updateListContents();
+            })
+            .catch(error => {
+                // Обрабатываем ошибку, если запрос не удался
+                console.error('Ошибка:', error);
+            });
+        });
+    });
+
+    // Обновляем содержимое списка покупок при загрузке страницы
+    updateListContents();
+});
+
+</script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+{% endblock %}

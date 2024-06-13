@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+<!-- Расширяем базовый шаблон base.html -->
+
+{% block title %}User Profile{% endblock %}
+<!-- Определяем содержимое блока title, который будет отображаться в заголовке страницы -->
+
+{% block content %}
+<!-- Определяем содержимое блока content, который будет вставлен в основной контент страницы -->
+
+<div class="container">
+  <!-- Основной контейнер для страницы профиля пользователя -->
+  <div class="page-header">
+    <!-- Заголовок страницы -->
+    <h2 class="text-center">Профиль пользователя</h2>
+    <!-- Кнопка для возврата на предыдущую страницу -->
+    <button onclick="goBack()" class="btn btn-default">
+      <span class='glyphicon glyphicon-chevron-left'></span> Назад
+    </button>
+  </div>
+
+  <div class="user-info">
+    <!-- Блок с информацией о пользователе -->
+    <p class="text-center">
+      <!-- Отображение имени пользователя и его электронной почты -->
+      <strong>Username:</strong> {{ username }} <br>
+      <strong>Email:</strong> {{ email }} <br>
+    </p>
+  </div>
+</div>
+
+<script>
+  // Функция для возврата на предыдущую страницу
+  function goBack() {
+    window.history.back();
+  }
+</script>
+
+{% endblock %}
+<!-- Завершаем блок content -->
